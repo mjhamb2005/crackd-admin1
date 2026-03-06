@@ -5,7 +5,8 @@ export default async function ImagesPage() {
   const { data: images, count } = await supabase
     .from('images')
     .select('*', { count: 'exact' })
-    .order('created_at_utc', { ascending: false })
+    .eq('is_public', true)
+    .order('created_datetime_utc', { ascending: false })
     .limit(50)
 
   return (
@@ -19,15 +20,15 @@ export default async function ImagesPage() {
       </div>
       <div style={{ overflowX: 'auto' }}>
         <table className="data-table">
-          <thead><tr><th>Preview</th><th>ID</th><th>Description</th><th>Owner</th><th>Created</th></tr></thead>
+          <thead><tr><th>Preview</th><th>ID</th><th>Description</th><th>Public</th><th>Created</th></tr></thead>
           <tbody>
             {images?.map(img => (
               <tr key={img.id}>
                 <td>{img.url ? <img src={img.url} alt="" style={{ width: '44px', height: '44px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border)' }} /> : '—'}</td>
                 <td style={{ color: 'var(--text-dimmer)' }}>{img.id.slice(0, 8)}…</td>
-                <td style={{ color: img.description ? 'var(--text)' : 'var(--text-dimmer)' }}>{img.description ? img.description.slice(0, 60) + (img.description.length > 60 ? '…' : '') : '—'}</td>
-                <td style={{ color: 'var(--text-dimmer)' }}>{img.user_id ? img.user_id.slice(0, 8) + '…' : '—'}</td>
-                <td style={{ color: 'var(--text-dimmer)' }}>{new Date(img.created_at_utc).toLocaleDateString()}</td>
+                <td style={{ color: img.image_description ? 'var(--text)' : 'var(--text-dimmer)' }}>{img.image_description ? img.image_description.slice(0, 60) + (img.image_description.length > 60 ? '…' : '') : '—'}</td>
+                <td>{img.is_public ? <span className="badge badge-teal">public</span> : <span className="badge badge-dim">private</span>}</td>
+                <td style={{ color: 'var(--text-dimmer)' }}>{new Date(img.created_datetime_utc).toLocaleDateString()}</td>
               </tr>
             ))}
           </tbody>

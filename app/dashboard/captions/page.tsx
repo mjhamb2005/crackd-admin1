@@ -2,15 +2,14 @@ import { createClient } from '@/lib/supabase/server'
 
 export default async function CaptionsPage() {
   const supabase = await createClient()
-
   const { data: captions, count } = await supabase
     .from('captions')
     .select('*', { count: 'exact' })
-    .order('created_at_utc', { ascending: false })
+    .eq('is_public', true)
+    .order('created_datetime_utc', { ascending: false })
     .limit(100)
 
   const { data: voteCounts } = await supabase.from('caption_votes').select('caption_id, vote_value')
-
   const voteMap: Record<string, { up: number; down: number }> = {}
   for (const v of voteCounts ?? []) {
     if (!voteMap[v.caption_id]) voteMap[v.caption_id] = { up: 0, down: 0 }
@@ -19,44 +18,33 @@ export default async function CaptionsPage() {
   }
 
   return (
-    <div style={{ animation: 'fadeIn 0.25s ease' }}>
-      <div style={{ padding: '24px 24px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+    <div style={{ animation: 'fadeIn 0.3s ease' }}>
+      <div style={{ padding: '28px 28px 22px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--text-dimmer)', letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: '4px' }}>Read Only</div>
-          <h1 style={{ fontSize: '22px', fontWeight: '500' }}>Captions</h1>
+          <div style={{ fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--text-dimmer)', letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: '6px' }}>Read Only</div>
+          <h1 style={{ fontFamily: 'var(--sans)', fontSize: '26px', fontWeight: '800' }}>Captions</h1>
         </div>
         <span className="badge badge-dim">{count?.toLocaleString()} total</span>
       </div>
-      <div style={{ overflowX: 'auto' }}>
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Content</th>
-              <th>Image ID</th>
-              <th>Score</th>
-              <th>Votes</th>
-              <th>Created</th>
-            </tr>
-          </thead>
-          <tbody>
-            {captions?.map(cap => {
-              const votes = voteMap[cap.id] ?? { up: 0, down: 0 }
-              const score = votes.up - votes.down
-              return (
-                <tr key={cap.id}>
-                  <td style={{ color: 'var(--text-dimmer)' }}>{cap.id.slice(0, 8)}…</td>
-                  <td><div style={{ maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'var(--mono)', fontSize: '11px' }}>{cap.content || '—'}</div></td>
-                  <td style={{ color: 'var(--text-dimmer)' }}>{cap.image_id ? cap.image_id.slice(0, 8) + '…' : '—'}</td>
-                  <td><span style={{ fontFamily: 'var(--mono)', fontSize: '12px', fontWeight: '600', color: score > 0 ? 'var(--accent)' : score < 0 ? 'var(--red)' : 'var(--text-dimmer)' }}>{score > 0 ? '+' : ''}{score}</span></td>
-                  <td><div style={{ display: 'flex', gap: '6px' }}><span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--accent)' }}>↑{votes.up}</span><span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--red)' }}>↓{votes.down}</span></div></td>
-                  <td style={{ color: 'var(--text-dimmer)' }}>{new Date(cap.created_at_utc).toLocaleDateString()}</td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
+      <table className="data-table">
+        <thead><tr><th>ID</th><th>Content</th><th>Image</th><th>Score</th><th>Votes</th><th>Created</th></tr></thead>
+        <tbody>
+          {captions?.map(cap => {
+            const votes = voteMap[cap.id] ?? { up: 0, down: 0 }
+            const score = votes.up - votes.down
+            return (
+              <tr key={cap.id}>
+                <td style={{ color: 'var(--text-dimmer)' }}>{cap.id.slice(0, 8)}…</td>
+                <td><div style={{ maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'var(--mono)', fontSize: '11px' }}>{cap.content || '—'}</div></td>
+                <td style={{ color: 'var(--text-dimmer)' }}>{cap.image_id ? cap.image_id.slice(0, 8) + '…' : '—'}</td>
+                <td><span style={{ fontFamily: 'var(--mono)', fontSize: '13px', fontWeight: '700', color: score > 0 ? 'var(--accent)' : score < 0 ? 'var(--red)' : 'var(--text-dimmer)' }}>{score > 0 ? '+' : ''}{score}</span></td>
+                <td><div style={{ display: 'flex', gap: '8px' }}><span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--teal)' }}>↑{votes.up}</span><span style={{ fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--red)' }}>↓{votes.down}</span></div></td>
+                <td style={{ color: 'var(--text-dimmer)' }}>{new Date(cap.created_datetime_utc).toLocaleDateString()}</td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
     </div>
   )
 }
