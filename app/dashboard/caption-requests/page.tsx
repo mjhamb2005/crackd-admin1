@@ -1,15 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 
-export default async function UsersPage() {
+export default async function CaptionRequestsPage() {
   const supabase = await createClient()
-  const { data, count } = await supabase.from('profiles').select('*', { count: 'exact' }).order('created_datetime_utc', { ascending: false }).limit(200)
+  const { data, count } = await supabase.from('caption_requests').select('*', { count: 'exact' }).order('created_datetime_utc', { ascending: false }).limit(200)
   const cols = data && data[0] ? Object.keys(data[0]) : []
   return (
     <div style={{ animation: 'fadeIn 0.3s ease' }}>
       <div style={{ padding: '28px 28px 22px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
           <div style={{ fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--text-dimmer)', letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: '6px' }}>Read Only</div>
-          <h1 style={{ fontFamily: 'var(--sans)', fontSize: '26px', fontWeight: '800' }}>Users</h1>
+          <h1 style={{ fontFamily: 'var(--sans)', fontSize: '26px', fontWeight: '800' }}>Caption Requests</h1>
         </div>
         <span className="badge badge-dim">{count?.toLocaleString()} total</span>
       </div>
@@ -19,7 +19,7 @@ export default async function UsersPage() {
           <tbody>
             {data?.map((row, i) => (
               <tr key={i}>{cols.map((k, j) => (
-                <td key={j} style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <td key={j} style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {row[k] === null ? <span style={{ color: 'var(--text-dimmer)' }}>null</span>
                     : typeof row[k] === 'boolean' ? <span className={`badge ${row[k] ? 'badge-green' : 'badge-dim'}`}>{String(row[k])}</span>
                     : String(row[k])}
@@ -28,7 +28,7 @@ export default async function UsersPage() {
             ))}
           </tbody>
         </table>
-        {(!data || data.length === 0) && <div style={{ padding: '48px', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--text-dimmer)' }}>No users found.</div>}
+        {(!data || data.length === 0) && <div style={{ padding: '48px', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--text-dimmer)' }}>No caption requests found.</div>}
       </div>
     </div>
   )

@@ -6,31 +6,21 @@ export default async function DashboardPage() {
     { count: totalImages },
     { count: totalCaptions },
     { count: totalUsers },
-    { count: totalVotes },
     { data: recentCaptions },
-    { data: voteBreakdown },
   ] = await Promise.all([
-    supabase.from('images').select('*', { count: 'exact', head: true }).eq('is_public', true),
-    supabase.from('captions').select('*', { count: 'exact', head: true }).eq('is_public', true),
+    supabase.from('images').select('*', { count: 'exact', head: true }),
+    supabase.from('captions').select('*', { count: 'exact', head: true }),
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
-    supabase.from('caption_votes').select('*', { count: 'exact', head: true }),
-    supabase.from('captions').select('id, content, image_id, created_datetime_utc').eq('is_public', true).order('created_datetime_utc', { ascending: false }).limit(10),
-    supabase.from('caption_votes').select('vote_value'),
+    supabase.from('captions').select('id, content, image_id, created_datetime_utc').order('created_datetime_utc', { ascending: false }).limit(10),
   ])
 
-  const upvotes = voteBreakdown?.filter(v => v.vote_value === 1).length ?? 0
-  const downvotes = voteBreakdown?.filter(v => v.vote_value === -1).length ?? 0
-  const voteTotal = upvotes + downvotes
-  const upvotePct = voteTotal > 0 ? Math.round((upvotes / voteTotal) * 100) : 0
   const avgCaptionsPerImage = totalImages && totalCaptions ? (totalCaptions / totalImages).toFixed(1) : '—'
 
   const stats = [
     { label: 'Total Images', value: totalImages?.toLocaleString() ?? '—', color: '#b57bff' },
     { label: 'Total Captions', value: totalCaptions?.toLocaleString() ?? '—', color: '#ff6eb4' },
     { label: 'Registered Users', value: totalUsers?.toLocaleString() ?? '—', color: '#4dffd2' },
-    { label: 'Total Votes', value: totalVotes?.toLocaleString() ?? '—', color: '#ffb84d' },
-    { label: 'Avg Captions / Image', value: avgCaptionsPerImage, color: '#b57bff' },
-    { label: 'Upvote Rate', value: `${upvotePct}%`, color: '#4dffd2' },
+    { label: 'Avg Captions / Image', value: avgCaptionsPerImage, color: '#ffb84d' },
   ]
 
   return (
@@ -41,8 +31,8 @@ export default async function DashboardPage() {
           <h1 style={{ fontFamily: 'var(--sans)', fontSize: '26px', fontWeight: '800' }}>Dashboard</h1>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div className="live-dot" style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'var(--teal)', boxShadow: '0 0 8px var(--teal)' }} />
-          <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--teal)', letterSpacing: '0.15em' }}>LIVE</span>
+          <div className="live-dot" style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#4dffd2', boxShadow: '0 0 8px #4dffd2' }} />
+          <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: '#4dffd2', letterSpacing: '0.15em' }}>LIVE</span>
         </div>
       </div>
 
@@ -57,25 +47,16 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div style={{ padding: '20px 28px', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-dimmer)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px' }}>Audience Sentiment</div>
-        <div style={{ display: 'flex', height: '10px', borderRadius: '99px', overflow: 'hidden', background: 'var(--red-dim)', border: '1px solid var(--border)' }}>
-          <div style={{ width: `${upvotePct}%`, background: 'linear-gradient(90deg, #7c3aed, #4dffd2)' }} />
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', fontFamily: 'var(--mono)', fontSize: '10px' }}>
-          <span style={{ color: 'var(--accent)' }}>↑ {upvotePct}% upvotes ({upvotes.toLocaleString()})</span>
-          <span style={{ color: 'var(--red)' }}>{100 - upvotePct}% downvotes ({downvotes.toLocaleString()}) ↓</span>
-        </div>
-      </div>
-
       <div>
         <div style={{ padding: '16px 28px 12px', borderBottom: '1px solid var(--border)', fontFamily: 'var(--sans)', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-dim)' }}>Recent Captions</div>
-        {recentCaptions?.map(c => (
+        {recentCaptions && recentCaptions.length > 0 ? recentCaptions.map(c => (
           <div key={c.id} style={{ padding: '14px 28px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--text)' }}>{c.content}</div>
             <div style={{ fontFamily: 'var(--mono)', fontSize: '9px', color: 'var(--text-dimmer)', marginLeft: '16px', whiteSpace: 'nowrap' }}>{new Date(c.created_datetime_utc).toLocaleDateString()}</div>
           </div>
-        ))}
+        )) : (
+          <div style={{ padding: '48px', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--text-dimmer)' }}>No captions found.</div>
+        )}
       </div>
     </div>
   )
