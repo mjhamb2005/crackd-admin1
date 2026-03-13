@@ -15,21 +15,21 @@ export default function WhitelistedEmailsPage() {
 
   const load = async () => {
     setLoading(true)
-    const { data, count: c } = await supabase.from('whitelisted_emails').select('*', { count: 'exact' }).order('id', { ascending: false })
+    const { data, count: c } = await supabase.from('whitelist_email_addresses').select('*', { count: 'exact' }).order('id', { ascending: false })
     setRows(data || []); setCount(c || 0); setLoading(false)
   }
   useEffect(() => { load() }, [])
 
   const handleSave = async () => {
     setSaving(true); setError('')
-    const { error: e } = await supabase.from('whitelisted_emails').insert({ email })
+    const { error: e } = await supabase.from('whitelist_email_addresses').insert({ email_address: email })
     if (e) { setError(e.message); setSaving(false); return }
     setSaving(false); setEmail(''); setModal(null); load()
   }
 
   const handleDelete = async () => {
     setSaving(true)
-    const { error: e } = await supabase.from('whitelisted_emails').delete().eq('id', selected.id)
+    const { error: e } = await supabase.from('whitelist_email_addresses').delete().eq('id', selected.id)
     if (e) { setError(e.message); setSaving(false); return }
     setSaving(false); setModal(null); load()
   }
@@ -53,9 +53,9 @@ export default function WhitelistedEmailsPage() {
             <tbody>
               {rows.map(r => (
                 <tr key={r.id}>
-                  <td style={{ color: 'var(--text-dimmer)' }}>{String(r.id).slice(0,8)}…</td>
-                  <td><span style={{ fontFamily: 'var(--mono)' }}>{r.email}</span></td>
-                  <td style={{ color: 'var(--text-dimmer)' }}>{r.created_at ? new Date(r.created_at).toLocaleDateString() : '—'}</td>
+                  <td style={{ color: 'var(--text-dimmer)' }}>{r.id}</td>
+                  <td><span style={{ fontFamily: 'var(--mono)' }}>{r.email_address}</span></td>
+                  <td style={{ color: 'var(--text-dimmer)' }}>{r.created_datetime_utc ? new Date(r.created_datetime_utc).toLocaleDateString() : '—'}</td>
                   <td><button className="btn btn-danger" onClick={() => { setSelected(r); setError(''); setModal('delete') }} style={{ padding: '3px 10px' }}>Del</button></td>
                 </tr>
               ))}
@@ -84,7 +84,7 @@ export default function WhitelistedEmailsPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
           <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: '4px', width: '360px', padding: '24px' }}>
             <div style={{ fontFamily: 'var(--mono)', fontSize: '13px', fontWeight: '600', marginBottom: '12px' }}>Remove Email?</div>
-            <div style={{ color: 'var(--text-dim)', fontSize: '12px', marginBottom: '20px' }}>Remove <span style={{ color: 'var(--accent)', fontFamily: 'var(--mono)' }}>{selected.email}</span>?</div>
+            <div style={{ color: 'var(--text-dim)', fontSize: '12px', marginBottom: '20px' }}>Remove <span style={{ color: 'var(--accent)', fontFamily: 'var(--mono)' }}>{selected.email_address}</span>?</div>
             {error && <div style={{ background: 'var(--red-dim)', color: 'var(--red)', padding: '8px 12px', marginBottom: '12px', fontSize: '12px' }}>{error}</div>}
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
               <button className="btn" onClick={() => setModal(null)}>Cancel</button>
