@@ -10,6 +10,14 @@ export default function HumorMixPage() {
   const [editVals, setEditVals] = useState<Record<string,any>>({})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [userId, setUserId] = useState<string>('')
+
+  useEffect(() => {
+    load()
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id ?? '')
+    })
+  }, [])
 
   const load = async () => {
     setLoading(true)
@@ -17,13 +25,15 @@ export default function HumorMixPage() {
     setRows(data || [])
     setLoading(false)
   }
-  useEffect(() => { load() }, [])
 
   const openEdit = (row: any) => { setEditing(row); setEditVals({ ...row }); setError('') }
 
   const handleSave = async () => {
     setSaving(true); setError('')
-    const { error: e } = await supabase.from('humor_flavor_mix').update(editVals).eq('id', editing.id)
+    const { error: e } = await supabase.from('humor_flavor_mix').update({
+      ...editVals,
+      modified_by_user_id: userId,
+    }).eq('id', editing.id)
     if (e) { setError(e.message); setSaving(false); return }
     setSaving(false); setEditing(null); load()
   }

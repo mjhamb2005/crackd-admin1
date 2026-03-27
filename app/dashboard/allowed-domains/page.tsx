@@ -12,17 +12,28 @@ export default function AllowedDomainsPage() {
   const [domain, setDomain] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [userId, setUserId] = useState<string>('')
+
+  useEffect(() => {
+    load()
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id ?? '')
+    })
+  }, [])
 
   const load = async () => {
     setLoading(true)
     const { data, count: c } = await supabase.from('allowed_signup_domains').select('*', { count: 'exact' }).order('id', { ascending: false })
     setRows(data || []); setCount(c || 0); setLoading(false)
   }
-  useEffect(() => { load() }, [])
 
   const handleSave = async () => {
     setSaving(true); setError('')
-    const { error: e } = await supabase.from('allowed_signup_domains').insert({ apex_domain: domain })
+    const { error: e } = await supabase.from('allowed_signup_domains').insert({
+      apex_domain: domain,
+      created_by_user_id: userId,
+      modified_by_user_id: userId,
+    })
     if (e) { setError(e.message); setSaving(false); return }
     setSaving(false); setDomain(''); setModal(null); load()
   }

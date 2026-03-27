@@ -13,14 +13,21 @@ export default function ImagesPage() {
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [userId, setUserId] = useState<string>('')
   const fileRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    load()
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id ?? '')
+    })
+  }, [])
 
   const load = async () => {
     setLoading(true)
     const { data, count: c } = await supabase.from('images').select('*', { count: 'exact' }).order('created_datetime_utc', { ascending: false }).limit(100)
     setImages(data || []); setCount(c || 0); setLoading(false)
   }
-  useEffect(() => { load() }, [])
 
   const openCreate = () => { setForm({ url: '', image_description: '', is_public: true }); setError(''); setModal('create') }
   const openEdit = (r: any) => { setSelected(r); setForm({ url: r.url ?? '', image_description: r.image_description ?? '', is_public: r.is_public ?? true }); setError(''); setModal('edit') }
@@ -41,7 +48,13 @@ export default function ImagesPage() {
 
   const handleSave = async () => {
     setSaving(true); setError('')
-    const payload = { url: form.url || null, image_description: form.image_description || null, is_public: form.is_public }
+    const payload = {
+      url: form.url || null,
+      image_description: form.image_description || null,
+      is_public: form.is_public,
+      modified_by_user_id: userId,
+      ...(modal === 'create' && { created_by_user_id: userId }),
+    }
     const { error: e } = modal === 'create'
       ? await supabase.from('images').insert(payload)
       : await supabase.from('images').update(payload).eq('id', selected.id)

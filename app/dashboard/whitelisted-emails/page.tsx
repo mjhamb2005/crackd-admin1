@@ -12,17 +12,28 @@ export default function WhitelistedEmailsPage() {
   const [email, setEmail] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [userId, setUserId] = useState<string>('')
+
+  useEffect(() => {
+    load()
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id ?? '')
+    })
+  }, [])
 
   const load = async () => {
     setLoading(true)
     const { data, count: c } = await supabase.from('whitelist_email_addresses').select('*', { count: 'exact' }).order('id', { ascending: false })
     setRows(data || []); setCount(c || 0); setLoading(false)
   }
-  useEffect(() => { load() }, [])
 
   const handleSave = async () => {
     setSaving(true); setError('')
-    const { error: e } = await supabase.from('whitelist_email_addresses').insert({ email_address: email })
+    const { error: e } = await supabase.from('whitelist_email_addresses').insert({
+      email_address: email,
+      created_by_user_id: userId,
+      modified_by_user_id: userId,
+    })
     if (e) { setError(e.message); setSaving(false); return }
     setSaving(false); setEmail(''); setModal(null); load()
   }

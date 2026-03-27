@@ -12,13 +12,20 @@ export default function LLMProvidersPage() {
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [userId, setUserId] = useState<string>('')
+
+  useEffect(() => {
+    load()
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id ?? '')
+    })
+  }, [])
 
   const load = async () => {
     setLoading(true)
     const { data, count: c } = await supabase.from('llm_providers').select('*', { count: 'exact' }).order('id', { ascending: false })
     setRows(data || []); setCount(c || 0); setLoading(false)
   }
-  useEffect(() => { load() }, [])
 
   const openCreate = () => { setName(''); setError(''); setModal('create') }
   const openEdit = (r: any) => { setSelected(r); setName(r.name ?? ''); setError(''); setModal('edit') }
@@ -26,9 +33,14 @@ export default function LLMProvidersPage() {
 
   const handleSave = async () => {
     setSaving(true); setError('')
+    const payload = {
+      name,
+      modified_by_user_id: userId,
+      ...(modal === 'create' && { created_by_user_id: userId }),
+    }
     const { error: e } = modal === 'create'
-      ? await supabase.from('llm_providers').insert({ name })
-      : await supabase.from('llm_providers').update({ name }).eq('id', selected.id)
+      ? await supabase.from('llm_providers').insert(payload)
+      : await supabase.from('llm_providers').update(payload).eq('id', selected.id)
     if (e) { setError(e.message); setSaving(false); return }
     setSaving(false); setModal(null); load()
   }

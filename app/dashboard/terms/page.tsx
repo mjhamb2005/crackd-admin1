@@ -12,13 +12,20 @@ export default function TermsPage() {
   const [form, setForm] = useState({ term: '', definition: '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [userId, setUserId] = useState<string>('')
+
+  useEffect(() => {
+    load()
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id ?? '')
+    })
+  }, [])
 
   const load = async () => {
     setLoading(true)
     const { data, count: c } = await supabase.from('terms').select('*', { count: 'exact' }).order('id', { ascending: false }).limit(200)
     setRows(data || []); setCount(c || 0); setLoading(false)
   }
-  useEffect(() => { load() }, [])
 
   const openCreate = () => { setForm({ term: '', definition: '' }); setError(''); setModal('create') }
   const openEdit = (r: any) => { setSelected(r); setForm({ term: r.term ?? '', definition: r.definition ?? '' }); setError(''); setModal('edit') }
@@ -26,7 +33,12 @@ export default function TermsPage() {
 
   const handleSave = async () => {
     setSaving(true); setError('')
-    const payload = { term: form.term || null, definition: form.definition || null }
+    const payload = {
+      term: form.term || null,
+      definition: form.definition || null,
+      modified_by_user_id: userId,
+      ...(modal === 'create' && { created_by_user_id: userId }),
+    }
     const { error: e } = modal === 'create'
       ? await supabase.from('terms').insert(payload)
       : await supabase.from('terms').update(payload).eq('id', selected.id)

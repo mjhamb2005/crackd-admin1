@@ -12,13 +12,20 @@ export default function CaptionExamplesPage() {
   const [form, setForm] = useState({ image_id: '', image_description: '', caption: '', explanation: '', priority: '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [userId, setUserId] = useState<string>('')
+
+  useEffect(() => {
+    load()
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id ?? '')
+    })
+  }, [])
 
   const load = async () => {
     setLoading(true)
     const { data, count: c } = await supabase.from('caption_examples').select('*', { count: 'exact' }).order('id', { ascending: false }).limit(200)
     setRows(data || []); setCount(c || 0); setLoading(false)
   }
-  useEffect(() => { load() }, [])
 
   const blank = { image_id: '', image_description: '', caption: '', explanation: '', priority: '' }
   const openCreate = () => { setForm(blank); setError(''); setModal('create') }
@@ -27,7 +34,15 @@ export default function CaptionExamplesPage() {
 
   const handleSave = async () => {
     setSaving(true); setError('')
-    const payload = { image_id: form.image_id || null, image_description: form.image_description || null, caption: form.caption || null, explanation: form.explanation || null, priority: form.priority ? Number(form.priority) : null }
+    const payload = {
+      image_id: form.image_id || null,
+      image_description: form.image_description || null,
+      caption: form.caption || null,
+      explanation: form.explanation || null,
+      priority: form.priority ? Number(form.priority) : null,
+      modified_by_user_id: userId,
+      ...(modal === 'create' && { created_by_user_id: userId }),
+    }
     const { error: e } = modal === 'create'
       ? await supabase.from('caption_examples').insert(payload)
       : await supabase.from('caption_examples').update(payload).eq('id', selected.id)

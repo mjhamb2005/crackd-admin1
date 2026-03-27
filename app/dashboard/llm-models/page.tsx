@@ -12,13 +12,20 @@ export default function LLMModelsPage() {
   const [form, setForm] = useState({ name: '', llm_provider_id: '', provider_model_id: '', is_temperature_supported: true })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [userId, setUserId] = useState<string>('')
+
+  useEffect(() => {
+    load()
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id ?? '')
+    })
+  }, [])
 
   const load = async () => {
     setLoading(true)
     const { data, count: c } = await supabase.from('llm_models').select('*', { count: 'exact' }).order('id', { ascending: false })
     setRows(data || []); setCount(c || 0); setLoading(false)
   }
-  useEffect(() => { load() }, [])
 
   const openCreate = () => { setForm({ name: '', llm_provider_id: '', provider_model_id: '', is_temperature_supported: true }); setError(''); setModal('create') }
   const openEdit = (r: any) => { setSelected(r); setForm({ name: r.name ?? '', llm_provider_id: r.llm_provider_id ?? '', provider_model_id: r.provider_model_id ?? '', is_temperature_supported: r.is_temperature_supported ?? true }); setError(''); setModal('edit') }
@@ -26,7 +33,14 @@ export default function LLMModelsPage() {
 
   const handleSave = async () => {
     setSaving(true); setError('')
-    const payload = { name: form.name || null, llm_provider_id: form.llm_provider_id ? Number(form.llm_provider_id) : null, provider_model_id: form.provider_model_id || null, is_temperature_supported: form.is_temperature_supported }
+    const payload = {
+      name: form.name || null,
+      llm_provider_id: form.llm_provider_id ? Number(form.llm_provider_id) : null,
+      provider_model_id: form.provider_model_id || null,
+      is_temperature_supported: form.is_temperature_supported,
+      modified_by_user_id: userId,
+      ...(modal === 'create' && { created_by_user_id: userId }),
+    }
     const { error: e } = modal === 'create'
       ? await supabase.from('llm_models').insert(payload)
       : await supabase.from('llm_models').update(payload).eq('id', selected.id)
