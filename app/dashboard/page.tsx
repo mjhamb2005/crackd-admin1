@@ -11,7 +11,10 @@ export default async function DashboardPage() {
     supabase.from('images').select('*', { count: 'exact', head: true }),
     supabase.from('captions').select('*', { count: 'exact', head: true }),
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
-    supabase.from('captions').select('id, content, image_id, created_datetime_utc').order('created_datetime_utc', { ascending: false }).limit(10),
+    supabase.from('captions')
+      .select('id, content, created_datetime_utc')
+      .order('created_datetime_utc', { ascending: false })
+      .limit(5),
   ])
 
   const avgCaptionsPerImage = totalImages && totalCaptions ? (totalCaptions / totalImages).toFixed(1) : '—'
@@ -31,7 +34,7 @@ export default async function DashboardPage() {
           <h1 style={{ fontFamily: 'var(--sans)', fontSize: '26px', fontWeight: '800' }}>Dashboard</h1>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div className="live-dot" style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#4dffd2', boxShadow: '0 0 8px #4dffd2' }} />
+          <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#4dffd2', boxShadow: '0 0 8px #4dffd2' }} />
           <span style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: '#4dffd2', letterSpacing: '0.15em' }}>LIVE</span>
         </div>
       </div>

@@ -2,8 +2,10 @@ import { createClient } from '@/lib/supabase/server'
 
 export default async function CaptionsPage() {
   const supabase = await createClient()
-  const { data, count } = await supabase.from('captions').select('*', { count: 'exact' }).order('created_datetime_utc', { ascending: false }).limit(200)
-  const cols = data && data[0] ? Object.keys(data[0]) : []
+  const { data, count } = await supabase.from('captions')
+    .select('id, content, is_public, is_featured, like_count, humor_flavor_id, created_datetime_utc')
+    .order('created_datetime_utc', { ascending: false }).limit(200)
+
   return (
     <div style={{ animation: 'fadeIn 0.3s ease' }}>
       <div style={{ padding: '28px 28px 22px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
@@ -15,20 +17,54 @@ export default async function CaptionsPage() {
       </div>
       <div style={{ overflowX: 'auto' }}>
         <table className="data-table">
-          <thead><tr>{cols.map(k => <th key={k}>{k}</th>)}</tr></thead>
+          <thead>
+            <tr>
+              <th style={{ width: '40%' }}>Content</th>
+              <th>Public</th>
+              <th>Featured</th>
+              <th>Likes</th>
+              <th>Flavor</th>
+              <th>Created</th>
+            </tr>
+          </thead>
           <tbody>
-            {data?.map((row, i) => (
-              <tr key={i}>{cols.map((k, j) => (
-                <td key={j} style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {row[k] === null ? <span style={{ color: 'var(--text-dimmer)' }}>null</span>
-                    : typeof row[k] === 'boolean' ? <span className={`badge ${row[k] ? 'badge-green' : 'badge-dim'}`}>{String(row[k])}</span>
-                    : String(row[k])}
+            {data?.map((row) => (
+              <tr key={row.id}>
+                <td style={{ maxWidth: '400px' }}>
+                  <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'var(--sans)', fontSize: '13px', color: 'var(--text)' }}>
+                    {row.content || '—'}
+                  </div>
                 </td>
-              ))}</tr>
+                <td>
+                  {row.is_public
+                    ? <span className="badge badge-green">public</span>
+                    : <span className="badge badge-dim">private</span>}
+                </td>
+                <td>
+                  {row.is_featured
+                    ? <span className="badge" style={{ background: 'rgba(255,180,0,0.15)', color: '#ffb400', border: '1px solid rgba(255,180,0,0.3)' }}>⭐ featured</span>
+                    : <span className="badge badge-dim">—</span>}
+                </td>
+                <td>
+                  <span style={{ fontFamily: 'var(--mono)', fontSize: '12px', color: row.like_count > 0 ? 'var(--accent)' : 'var(--text-dimmer)' }}>
+                    ♥ {row.like_count ?? 0}
+                  </span>
+                </td>
+                <td style={{ color: 'var(--text-dimmer)', fontFamily: 'var(--mono)', fontSize: '11px' }}>
+                  {row.humor_flavor_id ?? '—'}
+                </td>
+                <td style={{ color: 'var(--text-dimmer)', fontFamily: 'var(--mono)', fontSize: '11px', whiteSpace: 'nowrap' }}>
+                  {row.created_datetime_utc ? new Date(row.created_datetime_utc).toLocaleDateString() : '—'}
+                </td>
+              </tr>
             ))}
           </tbody>
         </table>
-        {(!data || data.length === 0) && <div style={{ padding: '48px', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--text-dimmer)' }}>No captions found.</div>}
+        {(!data || data.length === 0) && (
+          <div style={{ padding: '48px', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: '12px', color: 'var(--text-dimmer)' }}>
+            No captions found.
+          </div>
+        )}
       </div>
     </div>
   )
