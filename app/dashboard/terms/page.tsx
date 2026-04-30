@@ -9,7 +9,7 @@ export default function TermsPage() {
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState<'create'|'edit'|'delete'|null>(null)
   const [selected, setSelected] = useState<any>(null)
-  const [form, setForm] = useState({ term: '', definition: '' })
+  const [form, setForm] = useState({ term: '', definition: '', example: '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [userId, setUserId] = useState<string>('')
@@ -27,8 +27,8 @@ export default function TermsPage() {
     setRows(data || []); setCount(c || 0); setLoading(false)
   }
 
-  const openCreate = () => { setForm({ term: '', definition: '' }); setError(''); setModal('create') }
-  const openEdit = (r: any) => { setSelected(r); setForm({ term: r.term ?? '', definition: r.definition ?? '' }); setError(''); setModal('edit') }
+  const openCreate = () => { setForm({ term: '', definition: '', example: '' }); setError(''); setModal('create') }
+  const openEdit = (r: any) => { setSelected(r); setForm({ term: r.term ?? '', definition: r.definition ?? '', example: r.example ?? '' }); setError(''); setModal('edit') }
   const openDelete = (r: any) => { setSelected(r); setError(''); setModal('delete') }
 
   const handleSave = async () => {
@@ -36,6 +36,7 @@ export default function TermsPage() {
     const payload = {
       term: form.term || null,
       definition: form.definition || null,
+      example: form.example || null,
       modified_by_user_id: userId,
       ...(modal === 'create' && { created_by_user_id: userId }),
     }
@@ -68,13 +69,14 @@ export default function TermsPage() {
       {loading ? <div style={{ padding: '48px', textAlign: 'center', fontFamily: 'var(--mono)', color: 'var(--text-dimmer)' }}>Loading…</div> : (
         <div style={{ overflowX: 'auto' }}>
           <table className="data-table">
-            <thead><tr><th>ID</th><th>Term</th><th>Definition</th><th>Actions</th></tr></thead>
+            <thead><tr><th>ID</th><th>Term</th><th>Definition</th><th>Example</th><th>Actions</th></tr></thead>
             <tbody>
               {rows.map(r => (
                 <tr key={r.id}>
                   <td style={{ color: 'var(--text-dimmer)' }}>{String(r.id).slice(0,8)}{String(r.id).length > 8 ? '…' : ''}</td>
                   <td><span style={{ fontFamily: 'var(--mono)' }}>{r.term || '—'}</span></td>
-                  <td style={{ maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.definition || '—'}</td>
+                  <td style={{ maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.definition || '—'}</td>
+                  <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.example || '—'}</td>
                   <td><div style={{ display: 'flex', gap: '6px' }}>
                     <button className="btn" onClick={() => openEdit(r)} style={{ padding: '3px 10px' }}>Edit</button>
                     <button className="btn btn-danger" onClick={() => openDelete(r)} style={{ padding: '3px 10px' }}>Del</button>
@@ -88,16 +90,20 @@ export default function TermsPage() {
       )}
       {(modal === 'create' || modal === 'edit') && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-          <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: '4px', width: '480px', padding: '24px' }}>
+          <div style={{ background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: '4px', width: '480px', padding: '24px', maxHeight: '85vh', overflowY: 'auto' }}>
             <div style={{ fontFamily: 'var(--mono)', fontSize: '13px', fontWeight: '600', marginBottom: '20px' }}>{modal === 'create' ? 'New Term' : 'Edit Term'}</div>
             {error && <div style={{ background: 'var(--red-dim)', color: 'var(--red)', padding: '8px 12px', marginBottom: '16px', fontSize: '12px', borderRadius: '2px' }}>{error}</div>}
             <div style={{ marginBottom: '12px' }}>
               <div style={{ fontSize: '11px', color: 'var(--text-dimmer)', marginBottom: '4px', fontFamily: 'var(--mono)' }}>Term</div>
               <input className="input" value={form.term} onChange={e => setForm(v => ({ ...v, term: e.target.value }))} />
             </div>
-            <div style={{ marginBottom: '20px' }}>
+            <div style={{ marginBottom: '12px' }}>
               <div style={{ fontSize: '11px', color: 'var(--text-dimmer)', marginBottom: '4px', fontFamily: 'var(--mono)' }}>Definition</div>
               <textarea className="input" value={form.definition} onChange={e => setForm(v => ({ ...v, definition: e.target.value }))} />
+            </div>
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-dimmer)', marginBottom: '4px', fontFamily: 'var(--mono)' }}>Example</div>
+              <textarea className="input" value={form.example} onChange={e => setForm(v => ({ ...v, example: e.target.value }))} />
             </div>
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
               <button className="btn" onClick={() => setModal(null)}>Cancel</button>
